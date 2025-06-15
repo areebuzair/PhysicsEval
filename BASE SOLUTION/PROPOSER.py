@@ -54,7 +54,8 @@ COMPLETED_PROBLEMS = set()
 if os.path.exists(OUTPUT_FILE):
     with open(OUTPUT_FILE, 'r', encoding='utf-8') as f:
         COMPLETED_PROBLEMS = set(json.loads(line)['Problem_ID'] for line in f)
-    
+
+ERROR_COUNT = 0
 for i, problem in enumerate(PROBLEMS, start=1):
     print(f"Problem {i}/{len(PROBLEMS)}")
     ID = problem['Problem_ID']
@@ -63,6 +64,7 @@ for i, problem in enumerate(PROBLEMS, start=1):
 
     solution = get_solution(problem['problem'])
     if not solution:
+        ERROR_COUNT += 1
         continue
 
     DATA = {}
@@ -73,6 +75,10 @@ for i, problem in enumerate(PROBLEMS, start=1):
 
     with open(OUTPUT_FILE, 'a', encoding='utf-8') as f:
         f.write(json.dumps(DATA) + '\n')
+if ERROR_COUNT:
+    print("There were errors: Please run the code again")
+else:
+    print("All problems solved successfully")
 
     
 
