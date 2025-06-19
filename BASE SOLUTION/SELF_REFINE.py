@@ -24,13 +24,13 @@ def sanitize_file_name(name: str):
         name = name.replace(_c, "_")
     return name
 
-OUTPUT_FILE = f"./proposed_solution_by_{sanitize_file_name(MODEL)}.jsonl"
+INPUT_FILE = f"./proposed_solution_by_{sanitize_file_name(MODEL)}.jsonl"
+OUTPUT_FILE = f"./self_refined_solution_by_{sanitize_file_name(MODEL)}.jsonl"
 
-# Replace with API call to Huggingface dataset when dataset is made public "https://huggingface.co/datasets/IUTVanguard/PhysicsEval"
-with open("test set.json", "r", encoding="utf-8") as f:
-    PROBLEMS = json.load(f)
+with open(INPUT_FILE, "r", encoding="utf-8") as f:
+    PROBLEMS = [json.loads(line) for line in f]
 
-def get_solution(problem: str):
+def get_solution(problem: str, ai_solution: str):
     try:
         completion = client.chat.completions.create(
             model=MODEL,
@@ -40,6 +40,14 @@ def get_solution(problem: str):
                     "content": (f"You are an expert on Physics. You solve problems step by step while maintaining logical consistency. Solve the following Physics problem: {problem}"
 
                     "Finally, write the final answers in brief. Make sure you write all equations in LaTeX.")
+                },
+                {
+                    "role": "assistant",
+                    "content": f"{ai_solution}"
+                },
+                {
+                    "role": "user",
+                    "content": "You are a Physics Professor. Outline physics principles of given problem and please check your own answers for any mistakes, then answer again." 
                 }
             ],
             timeout=MAX_TIME_LIMIT
@@ -62,7 +70,7 @@ for i, problem in enumerate(PROBLEMS, start=1):
         continue
     print(f"Problem {i}/{len(PROBLEMS)}")
 
-    solution = get_solution(problem['problem'])
+    solution = get_solution(problem['problem'], problem['ai_solution'])
     if not solution:
         ERROR_COUNT += 1
         print("Failed to solve:", ID)
@@ -80,8 +88,3 @@ if ERROR_COUNT:
     print(f"There were {ERROR_COUNT} error/s: Please run the code again")
 else:
     print("All problems solved successfully")
-
-    
-
-
-
