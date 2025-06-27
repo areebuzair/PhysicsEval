@@ -58,33 +58,35 @@ def get_solution(problem: str, ai_solution: str):
         print(e)
         return None
 
-COMPLETED_PROBLEMS = set()
-if os.path.exists(OUTPUT_FILE):
-    with open(OUTPUT_FILE, 'r', encoding='utf-8') as f:
-        COMPLETED_PROBLEMS = set(json.loads(line)['Problem_ID'] for line in f)
 
-ERROR_COUNT = 0
-for i, problem in enumerate(PROBLEMS, start=1):
-    ID = problem['Problem_ID']
-    if ID in COMPLETED_PROBLEMS:
-        continue
-    print(f"Problem {i}/{len(PROBLEMS)}")
+while True:
+    COMPLETED_PROBLEMS = set()
+    if os.path.exists(OUTPUT_FILE):
+        with open(OUTPUT_FILE, 'r', encoding='utf-8') as f:
+            COMPLETED_PROBLEMS = set(json.loads(line)['Problem_ID'] for line in f)
+    ERROR_COUNT = 0
+    for i, problem in enumerate(PROBLEMS, start=1):
+        ID = problem['Problem_ID']
+        if ID in COMPLETED_PROBLEMS:
+            continue
+        print(f"Problem {i}/{len(PROBLEMS)}")
 
-    solution = get_solution(problem['problem'], problem['ai_solution'])
-    if not solution:
-        ERROR_COUNT += 1
-        print("Failed to solve:", ID)
-        continue
+        solution = get_solution(problem['problem'], problem['ai_solution'])
+        if not solution:
+            ERROR_COUNT += 1
+            print("Failed to solve:", ID)
+            continue
 
-    DATA = {}
-    DATA['Problem_ID'] = ID
-    DATA['problem'] = problem['problem']
-    DATA['ai_solution'] = solution
-    DATA['elaborated_solution_steps'] = problem['elaborated_solution_steps']
+        DATA = {}
+        DATA['Problem_ID'] = ID
+        DATA['problem'] = problem['problem']
+        DATA['ai_solution'] = solution
+        DATA['elaborated_solution_steps'] = problem['elaborated_solution_steps']
 
-    with open(OUTPUT_FILE, 'a', encoding='utf-8') as f:
-        f.write(json.dumps(DATA) + '\n')
-if ERROR_COUNT:
-    print(f"There were {ERROR_COUNT} error/s: Please run the code again")
-else:
-    print("All problems solved successfully")
+        with open(OUTPUT_FILE, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(DATA) + '\n')
+    if ERROR_COUNT:
+        print(f"There were {ERROR_COUNT} error/s: Please run the code again")
+    else:
+        print("All problems solved successfully")
+        break
