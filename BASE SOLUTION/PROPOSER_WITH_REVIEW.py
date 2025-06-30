@@ -10,13 +10,14 @@ load_dotenv()
 API_KEY = os.getenv('API_KEY')
 BASE_URL = os.getenv('BASE_URL')
 MODEL = os.getenv('MODEL')
+META_REVIEWER = os.getenv('META_REVIEWER')
 
 # Can be used with openai, ollama, gemini, openrouter etc.
 client = OpenAI(
   base_url=BASE_URL,
   api_key=API_KEY,
 )
-MAX_TIME_LIMIT = 180 # seconds
+MAX_TIME_LIMIT = 120 # seconds
 
 def sanitize_file_name(name: str):
     _forbidden_chars = "<>:\"/\\|?* "
@@ -24,13 +25,18 @@ def sanitize_file_name(name: str):
         name = name.replace(_c, "_")
     return name
 
-OUTPUT_FILE = f"./proposed_solution_by_{sanitize_file_name(MODEL)}.jsonl"
+INPUT_FILE = f"./proposed_solution_by_{sanitize_file_name(MODEL)}.jsonl"
+OUTPUT_FILE = f"./solution_after_single_agent_review_by_{sanitize_file_name(MODEL)}.jsonl"
+REVIEW_FILE = f"SAR_of_{sanitize_file_name(MODEL)}_by_{sanitize_file_name(META_REVIEWER)}.jsonl"
 
-# Replace with API call to Huggingface dataset when dataset is made public "https://huggingface.co/datasets/IUTVanguard/PhysicsEval"
-with open("test set.json", "r", encoding="utf-8") as f:
-    PROBLEMS = json.load(f)
+with open(INPUT_FILE, "r", encoding="utf-8") as f:
+    PROBLEMS = [json.loads(line) for line in f]
 
-def get_solution(problem: str):
+with open(REVIEW_FILE, "r", encoding="utf-8") as f:
+    REVIEWS = [json.loads(line) for line in f]
+    REVIEWS = {i['Problem_ID']: i["mistakes"] for i in REVIEWS}
+
+def get_solution(problem: str, ai_solution: str, feedback: list[str]):
     try:
         completion = client.chat.completions.create(
             model=MODEL,
@@ -40,6 +46,14 @@ def get_solution(problem: str):
                     "content": (f"You are an expert on Physics. You solve problems step by step while maintaining logical consistency. Solve the following Physics problem: {problem}"
 
                     "Finally, write the final answers in brief. Make sure you write all equations in LaTeX.")
+                },
+                {
+                    "role": "assistant",
+                    "content": f"{ai_solution}"
+                },
+                {
+                    "role": "user",
+                    "content": f"I have some feedback. {" ".join(feedback)} After taking this into account, please generate the solution once again. Remember to write all equations in LaTeX" 
                 }
             ],
             timeout=MAX_TIME_LIMIT
@@ -50,20 +64,24 @@ def get_solution(problem: str):
         print(e)
         return None
 
-COMPLETED_PROBLEMS = set()
-if os.path.exists(OUTPUT_FILE):
-    with open(OUTPUT_FILE, 'r', encoding='utf-8') as f:
-        COMPLETED_PROBLEMS = set(json.loads(line)['Problem_ID'] for line in f)
 
 while True:
+    COMPLETED_PROBLEMS = set()
+    if os.path.exists(OUTPUT_FILE):
+        with open(OUTPUT_FILE, 'r', encoding='utf-8') as f:
+            COMPLETED_PROBLEMS = set(json.loads(line)['Problem_ID'] for line in f)
     ERROR_COUNT = 0
     for i, problem in enumerate(PROBLEMS, start=1):
         ID = problem['Problem_ID']
-        if ID in COMPLETED_PROBLEMS:
+        if ID in COMPLETED_PROBLEMS or len(REVIEWS[ID]) == 0:
             continue
         print(f"Problem {i}/{len(PROBLEMS)}")
-
-        solution = get_solution(problem['problem'])
+        solution = ""
+        if len(REVIEWS[ID]) != 0:
+            solution = get_solution(problem['problem'], problem['ai_solution'], REVIEWS[ID])
+        else:
+            continue
+            # solution = problem['ai_solution']
         if not solution:
             ERROR_COUNT += 1
             print("Failed to solve:", ID)
@@ -82,8 +100,3 @@ while True:
     else:
         print("All problems solved successfully")
         break
-
-    
-
-
-

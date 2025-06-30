@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 # Load environment variables from the .env file (if present)
 load_dotenv()
 
-MODEL = "deepseek/deepseek-r1:free" # os.getenv('MODEL')
+MODEL = os.getenv('MODEL')
 REVIEWERS = os.getenv('REVIEWERS').split(" ")
 
 def sanitize_file_name(name: str):
