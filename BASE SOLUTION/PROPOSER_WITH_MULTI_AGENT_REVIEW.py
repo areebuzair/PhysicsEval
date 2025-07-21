@@ -26,8 +26,8 @@ def sanitize_file_name(name: str):
     return name
 
 INPUT_FILE = f"./proposed_solution_by_{sanitize_file_name(MODEL)}.jsonl"
-OUTPUT_FILE = f"./solution_after_single_agent_review_by_{sanitize_file_name(MODEL)}.jsonl"
-REVIEW_FILE = f"SAR_of_{sanitize_file_name(MODEL)}_by_{sanitize_file_name(META_REVIEWER)}.jsonl"
+OUTPUT_FILE = f"./solution_after_multi_agent_review_by_{sanitize_file_name(MODEL)}.jsonl"
+REVIEW_FILE = f"MAR_of_{sanitize_file_name(MODEL)}_by_{sanitize_file_name(META_REVIEWER)}.jsonl"
 
 with open(INPUT_FILE, "r", encoding="utf-8") as f:
     PROBLEMS = [json.loads(line) for line in f]
@@ -39,7 +39,7 @@ with open(REVIEW_FILE, "r", encoding="utf-8") as f:
 def get_solution(problem: str, ai_solution: str, feedback: list[str]):
     try:
         completion = client.chat.completions.create(
-            model=MODEL,
+            model="meta-llama/llama-4-maverick",#MODEL,
             messages=[
                 {
                     "role": "user",
