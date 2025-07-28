@@ -31,6 +31,7 @@ REVIEW_FILE = f"MAR_of_{sanitize_file_name(MODEL)}_by_{sanitize_file_name(META_R
 
 with open(INPUT_FILE, "r", encoding="utf-8") as f:
     PROBLEMS = [json.loads(line) for line in f]
+    print(len(set(i["Problem_ID"] for i in PROBLEMS)))
 
 with open(REVIEW_FILE, "r", encoding="utf-8") as f:
     REVIEWS = [json.loads(line) for line in f]
@@ -64,14 +65,18 @@ def get_solution(problem: str, ai_solution: str, feedback: list[str]):
         print(e)
         return None
 
+MAX_ITERS = 2
 
 while True:
     COMPLETED_PROBLEMS = set()
     if os.path.exists(OUTPUT_FILE):
         with open(OUTPUT_FILE, 'r', encoding='utf-8') as f:
             COMPLETED_PROBLEMS = set(json.loads(line)['Problem_ID'] for line in f)
+    print(len(COMPLETED_PROBLEMS))
     ERROR_COUNT = 0
     for i, problem in enumerate(PROBLEMS, start=1):
+
+
         ID = problem['Problem_ID']
         NO_MISTAKES = False
         if ID in COMPLETED_PROBLEMS:
@@ -103,3 +108,7 @@ while True:
     else:
         print("All problems solved successfully")
         break
+
+    MAX_ITERS -= 1
+    if MAX_ITERS == 0:
+        break    

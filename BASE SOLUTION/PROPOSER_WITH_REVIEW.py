@@ -64,6 +64,7 @@ def get_solution(problem: str, ai_solution: str, feedback: list[str]):
         print(e)
         return None
 
+MAX_ITERS = 2
 
 while True:
     COMPLETED_PROBLEMS = set()
@@ -102,4 +103,7 @@ while True:
         print(f"There were {ERROR_COUNT} error/s: Please run the code again")
     else:
         print("All problems solved successfully")
+        break
+    MAX_ITERS -= 1
+    if MAX_ITERS == 0:
         break
