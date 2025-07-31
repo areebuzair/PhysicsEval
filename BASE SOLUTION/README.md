@@ -4,7 +4,8 @@
 
 # Base Solution
 
-To run the PROPOSER, after cloning the repository run:
+To run the PROPOSER, after cloning the repository move to ```BASE SOLUTION``` directory.
+Then run:
 ```
 pip install -r requirements.txt
 ```
