@@ -1,15 +1,16 @@
-import ollama
 from ollama import Client
 from pydantic import BaseModel
 import json
 import os
-from dotenv import load_dotenv
+from dotenv import dotenv_values
 
 # Load environment variables from the .env file (if present)
-load_dotenv()
+config = dotenv_values(".env")
 
-MODEL = os.getenv('MODEL')
-REVIEWERS = os.getenv('REVIEWERS').split(" ")
+# Access environment variables as if they came from the actual environment
+REVIEWERS = config['REVIEWERS'].split(" ")
+MODEL = config['MODEL']
+
 
 def sanitize_file_name(name: str):
     _forbidden_chars = "<>:\"/\\|?* "
@@ -17,7 +18,10 @@ def sanitize_file_name(name: str):
         name = name.replace(_c, "_")
     return name
 
-INPUT_FILE = f"./proposed_solution_by_{sanitize_file_name(MODEL)}.jsonl"
+INPUT_FILE = f"./SOLUTIONS/proposed_solution_by_{sanitize_file_name(MODEL)}.jsonl"
+os.makedirs("./REVIEWS", exist_ok=True)
+
+MAX_TIME_LIMIT = 180 # seconds
 
 class Review(BaseModel):
   calculation_accuracy_score: float
@@ -33,14 +37,14 @@ class Review(BaseModel):
   clarity_and_coherence_score: float
   incoherent_statements: list[str]
 
-chat = Client(timeout=120).chat
+chat = Client(timeout=MAX_TIME_LIMIT).chat
 
 REVIEWER_INDEX = 0
 while True:
     ERROR_COUNT = 0
     REVIEWER = REVIEWERS[REVIEWER_INDEX]
     print("Review by", REVIEWER)
-    OUTPUT_FILE = f"./review_of_{sanitize_file_name(MODEL)}_by_{sanitize_file_name(REVIEWER)}.jsonl"
+    OUTPUT_FILE = f"./REVIEWS/review_of_{sanitize_file_name(MODEL)}_by_{sanitize_file_name(REVIEWER)}.jsonl"
     COMPLETED_PROBLEMS = []
     try:
         with open(OUTPUT_FILE, 'r', encoding='utf-8') as f:

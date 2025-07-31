@@ -8,10 +8,10 @@ pip install -r requirements.txt
 Then, create a ```.env``` file with the following keys:
 ```
 API_KEY=<Your API Key>
-BASE_URL=<Base URL: Omit if using openai models directly>
-MODEL=<Model Name>
-REVIEWERS=<Model Names, space seperated>
-META_REVIEWER=<Model Name>
+BASE_URL=<OpenAI Compatible Base URL: Omit if using openai models directly>
+MODEL=<Proposer Model Name>
+REVIEWERS=<Multi Agent Model Names, space seperated>
+META_REVIEWER=<Single Agent Model Name - Acts as Metaverifier>
 ```
 
 Example:

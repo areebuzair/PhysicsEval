@@ -1,2 +1,5 @@
 .env
 *.jsonl
+.venv
+SOLUTIONS
+REVIEWS
