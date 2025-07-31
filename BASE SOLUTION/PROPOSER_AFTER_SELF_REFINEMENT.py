@@ -3,6 +3,8 @@ import json
 import os
 from dotenv import dotenv_values
 
+MAX_TIME_LIMIT = 180 # seconds
+
 # Load environment variables from the .env file (if present)
 config = dotenv_values(".env")
 
@@ -16,7 +18,6 @@ client = OpenAI(
   base_url=BASE_URL,
   api_key=API_KEY,
 )
-MAX_TIME_LIMIT = 180 # seconds
 
 def sanitize_file_name(name: str):
     _forbidden_chars = "<>:\"/\\|?* "

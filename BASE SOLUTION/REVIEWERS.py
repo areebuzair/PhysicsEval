@@ -4,6 +4,8 @@ import json
 import os
 from dotenv import dotenv_values
 
+MAX_TIME_LIMIT = 180 # seconds
+
 # Load environment variables from the .env file (if present)
 config = dotenv_values(".env")
 
@@ -21,7 +23,6 @@ def sanitize_file_name(name: str):
 INPUT_FILE = f"./SOLUTIONS/proposed_solution_by_{sanitize_file_name(MODEL)}.jsonl"
 os.makedirs("./REVIEWS", exist_ok=True)
 
-MAX_TIME_LIMIT = 180 # seconds
 
 class Review(BaseModel):
   calculation_accuracy_score: float
@@ -39,10 +40,8 @@ class Review(BaseModel):
 
 chat = Client(timeout=MAX_TIME_LIMIT).chat
 
-REVIEWER_INDEX = 0
-while True:
-    ERROR_COUNT = 0
-    REVIEWER = REVIEWERS[REVIEWER_INDEX]
+ERROR_COUNT = 0
+for REVIEWER in REVIEWERS:
     print("Review by", REVIEWER)
     OUTPUT_FILE = f"./REVIEWS/review_of_{sanitize_file_name(MODEL)}_by_{sanitize_file_name(REVIEWER)}.jsonl"
     COMPLETED_PROBLEMS = []
@@ -117,10 +116,8 @@ while True:
             print(e)
             ERROR_COUNT += 1
 
-    if ERROR_COUNT:
-        print(f"There were {ERROR_COUNT} errors. Running again.")
-    else:
-        REVIEWER_INDEX += 1
-        if REVIEWER_INDEX == len(REVIEWERS):
-            print("All reviews complete.")
-            break
+
+if ERROR_COUNT:
+    print(f"There were {ERROR_COUNT} errors. Please run again.")
+else:
+    print(f"All problems reviewed successfully")

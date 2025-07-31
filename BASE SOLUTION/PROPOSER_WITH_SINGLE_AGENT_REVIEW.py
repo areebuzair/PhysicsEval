@@ -1,23 +1,25 @@
 from openai import OpenAI
 import json
 import os
-from dotenv import load_dotenv
+from dotenv import dotenv_values
+
+MAX_TIME_LIMIT = 180 # seconds
 
 # Load environment variables from the .env file (if present)
-load_dotenv()
+config = dotenv_values(".env")
 
 # Access environment variables as if they came from the actual environment
-API_KEY = os.getenv('API_KEY')
-BASE_URL = os.getenv('BASE_URL')
-MODEL = os.getenv('MODEL')
-META_REVIEWER = os.getenv('META_REVIEWER')
+META_REVIEWER = config['META_REVIEWER']
+REVIEWERS = config['REVIEWERS'].split(" ")
+MODEL = config['MODEL']
+API_KEY = config['API_KEY']
+BASE_URL = config['BASE_URL']
 
 # Can be used with openai, ollama, gemini, openrouter etc.
 client = OpenAI(
   base_url=BASE_URL,
   api_key=API_KEY,
 )
-MAX_TIME_LIMIT = 180 # seconds
 
 def sanitize_file_name(name: str):
     _forbidden_chars = "<>:\"/\\|?* "
@@ -64,41 +66,41 @@ def get_solution(problem: str, ai_solution: str, feedback: list[str]):
         print(e)
         return None
 
-while True:
-    COMPLETED_PROBLEMS = set()
-    if os.path.exists(OUTPUT_FILE):
-        with open(OUTPUT_FILE, 'r', encoding='utf-8') as f:
-            COMPLETED_PROBLEMS = set(json.loads(line)['Problem_ID'] for line in f)
-    ERROR_COUNT = 0
-    for i, problem in enumerate(PROBLEMS, start=1):
-        ID = problem['Problem_ID']
-        NO_MISTAKES = False
-        if ID in COMPLETED_PROBLEMS:
-            continue
-        print(f"Problem {i}/{len(PROBLEMS)}")
-        solution = ""
-        if len(REVIEWS[ID]) != 0:
-            solution = get_solution(problem['problem'], problem['ai_solution'], REVIEWS[ID])
-        else:
-            solution = problem['ai_solution']
-            NO_MISTAKES = True
-        if not solution:
-            ERROR_COUNT += 1
-            print("Failed to solve:", ID)
-            continue
 
-        DATA = {}
-        DATA['Problem_ID'] = ID
-        DATA['problem'] = problem['problem']
-        DATA['ai_solution'] = solution
-        DATA['elaborated_solution_steps'] = problem['elaborated_solution_steps']
-        if NO_MISTAKES:
-            DATA['no_mistakes'] = True
-
-        with open(OUTPUT_FILE, 'a', encoding='utf-8') as f:
-            f.write(json.dumps(DATA) + '\n')
-    if ERROR_COUNT:
-        print(f"There were {ERROR_COUNT} error/s: Please run the code again")
+COMPLETED_PROBLEMS = set()
+if os.path.exists(OUTPUT_FILE):
+    with open(OUTPUT_FILE, 'r', encoding='utf-8') as f:
+        COMPLETED_PROBLEMS = set(json.loads(line)['Problem_ID'] for line in f)
+ERROR_COUNT = 0
+for i, problem in enumerate(PROBLEMS, start=1):
+    ID = problem['Problem_ID']
+    NO_MISTAKES = False
+    if ID in COMPLETED_PROBLEMS:
+        continue
+    print(f"Problem {i}/{len(PROBLEMS)}")
+    solution = ""
+    if len(REVIEWS[ID]) != 0:
+        solution = get_solution(problem['problem'], problem['ai_solution'], REVIEWS[ID])
     else:
-        print("All problems solved successfully")
-        break
+        solution = problem['ai_solution']
+        NO_MISTAKES = True
+    if not solution:
+        ERROR_COUNT += 1
+        print("Failed to solve:", ID)
+        continue
+
+    DATA = {}
+    DATA['Problem_ID'] = ID
+    DATA['problem'] = problem['problem']
+    DATA['ai_solution'] = solution
+    DATA['elaborated_solution_steps'] = problem['elaborated_solution_steps']
+    if NO_MISTAKES:
+        DATA['no_mistakes'] = True
+
+    with open(OUTPUT_FILE, 'a', encoding='utf-8') as f:
+        f.write(json.dumps(DATA) + '\n')
+if ERROR_COUNT:
+    print(f"There were {ERROR_COUNT} error/s: Please run the code again")
+else:
+    print("All problems solved successfully")
+    
