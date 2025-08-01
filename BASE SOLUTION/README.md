@@ -2,6 +2,10 @@
 > This code uses Ollama to run all reviewers. Make sure you have ollama installed.
 > You can choose any model to act as reviewers, but they have to support structured outputs.
 
+# TIP
+
+Run ```testmaker.py``` to create a test set of certain difficulty range and length.
+
 # Base Solution
 
 To run the PROPOSER, after cloning the repository move to ```BASE SOLUTION``` directory.
